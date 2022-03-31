@@ -1,0 +1,9 @@
+#! /usr/bin/env node
+
+process.env.DEBUG = '*';
+const { run } = require('../build/src/main.js');
+
+run(process.cwd()).catch((error) => {
+  console.log(error);
+  process.exitCode = 1;
+});
