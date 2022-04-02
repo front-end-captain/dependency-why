@@ -13,9 +13,6 @@
     "disperse": "bin/disperse"
   },
   "devDependencies": {
-    "@babel/plugin-proposal-decorators": "^7.17.8",
-    "@babel/preset-env": "^7.16.11",
-    "@babel/preset-react": "^7.16.7",
     "@types/debug": "^4.1.7",
     "@types/fs-extra": "^9.0.13",
     "@types/jest": "~27.4",
@@ -49,6 +46,9 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@babel/core": "^7.17.8",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/preset-react": "^7.16.7",
+    "@babel/plugin-proposal-decorators": "^7.17.8",
     "@babel/preset-typescript": "^7.16.7",
     "debug": "^4.3.4",
     "fs-extra": "^10.0.1",
