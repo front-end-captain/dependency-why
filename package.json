@@ -46,14 +46,15 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@babel/core": "^7.17.8",
+    "@babel/plugin-proposal-decorators": "^7.17.8",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-react": "^7.16.7",
-    "@babel/plugin-proposal-decorators": "^7.17.8",
     "@babel/preset-typescript": "^7.16.7",
     "debug": "^4.3.4",
     "fs-extra": "^10.0.1",
     "globby": "^11.1.0",
     "semver": "^7.3.5",
-    "tslib": "~2.3.1"
+    "tslib": "~2.3.1",
+    "zx": "^4.2.0"
   }
 }

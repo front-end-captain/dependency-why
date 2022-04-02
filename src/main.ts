@@ -13,7 +13,7 @@ const log = debug('main');
 // 将 <repo_root>/package.json `dependencies` 分散到各个项目的 package.json `dependencies` 字段中
 
 // 1. 获取 <repo_root>/package.json
-// 2. 获取 workspaces 下所有文件(.js/.ts/.jsx/.tsx)
+// 2. 获取 workspaces(包括src/scripts/plugins目录) 下所有文件(.js/.ts/.jsx/.tsx)
 // 3. 遍历所有文件，获得每个文件的 importSourceList
 // 4. 遍历 <repo_root>/package.json `dependencies` 获得每个依赖项在都在哪些目录下的文件被引用过
 // 5. 根据依赖项被引用的目录，将这个依赖项同步到该目录的package.json `dependencies` 字段中
@@ -66,6 +66,8 @@ function referencedInWhichWorkspace(
 
 async function run(context: string) {
   const workspacePkg = new WorkspacePkg(context);
+  // eslint-disable-next-line no-debugger
+  debugger;
   await workspacePkg.init();
 
   const rootPkg = await workspacePkg.getSpecifiedDirPackageJson(context);
@@ -129,42 +131,13 @@ async function run(context: string) {
           referencedWorkspace,
         );
 
-        dependenciesAnalysis.push({
-          name: dependencyName,
-          version,
-          referencedWorkspace: referencedWorkspace.map((workspace) => {
-            if (workspace === SRC_DIR) {
-              return {
-                workspace,
-                hasExplicitDeclaration: false,
-                version,
-                workspaceVersion: '',
-                isVersionEqual: true,
-              };
-            }
-            const pkg = workspacePkg.getSpecifiedDirPackageJson(workspace);
-            if (pkg) {
-              const hasExplicitDeclaration = Object.keys(
-                pkg.pkgJson?.dependencies ?? {},
-              ).includes(dependencyName);
-
-              const _workspaceVersion =
-                (pkg.pkgJson?.dependencies ?? {})[dependencyName] || '';
-
-              let _isVersionEqual = false;
-              try {
-                _isVersionEqual = semver.eq(version, _workspaceVersion);
-              } catch (_err) {
-                log('[semver.eq]', version, _workspaceVersion);
-              }
-              return {
-                workspace,
-                hasExplicitDeclaration: hasExplicitDeclaration,
-                version,
-                workspaceVersion: _workspaceVersion,
-                isVersionEqual: _isVersionEqual,
-              };
-            }
+        const _referencedWorkspace = referencedWorkspace.map((workspace) => {
+          if (workspace === SRC_DIR) {
+            workspacePkg.updatePackageJsonDependencies(
+              workspace,
+              dependencyName,
+              version,
+            );
             return {
               workspace,
               hasExplicitDeclaration: false,
@@ -172,14 +145,61 @@ async function run(context: string) {
               workspaceVersion: '',
               isVersionEqual: true,
             };
-          }),
+          }
+          const pkg = workspacePkg.getSpecifiedDirPackageJson(workspace);
+          if (pkg) {
+            const hasExplicitDeclaration = Object.keys(
+              pkg.pkgJson?.dependencies ?? {},
+            ).includes(dependencyName);
+
+            const _workspaceVersion =
+              (pkg.pkgJson?.dependencies ?? {})[dependencyName] || '';
+
+            let _isVersionEqual = false;
+            try {
+              _isVersionEqual = semver.eq(version, _workspaceVersion);
+            } catch (_err) {
+              log('[semver.eq]', version, _workspaceVersion);
+            }
+            if (!hasExplicitDeclaration) {
+              workspacePkg.updatePackageJsonDependencies(
+                workspace,
+                dependencyName,
+                version,
+              );
+            }
+            return {
+              workspace,
+              hasExplicitDeclaration: hasExplicitDeclaration,
+              version,
+              workspaceVersion: _workspaceVersion,
+              isVersionEqual: _isVersionEqual,
+            };
+          }
+          return {
+            workspace,
+            hasExplicitDeclaration: false,
+            version,
+            workspaceVersion: '',
+            isVersionEqual: true,
+          };
         });
+        dependenciesAnalysis.push({
+          name: dependencyName,
+          version,
+          referencedWorkspace: _referencedWorkspace,
+        });
+        if (referencedWorkspace.length > 0) {
+          workspacePkg.removeRootPackageJsonDependencies(dependencyName);
+        }
       }
 
       fs.writeJSONSync(
         path.resolve(context, 'dependenciesAnalysis.json'),
         dependenciesAnalysis,
       );
+
+      workspacePkg.dispersePackageJson();
     }
   }
 }

@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs-extra';
+import { $ } from 'zx';
 
 import { BasePkgFields } from './types';
 
@@ -29,6 +30,48 @@ class WorkspacePkg {
     return pkgJson;
   }
 
+  public updatePackageJsonDependencies(
+    dir: string,
+    dependencyName: string,
+    version: string,
+  ) {
+    const packageJson = this.workspacePkgs[dir].pkgJson;
+
+    if (packageJson) {
+      if (
+        dir.startsWith('packages') &&
+        (dependencyName === 'react' || dependencyName === 'react-dom')
+      ) {
+        packageJson.peerDependencies = {
+          ...(packageJson.peerDependencies || {}),
+          ...{ [dependencyName]: version },
+        };
+        return;
+      }
+      packageJson.dependencies = {
+        ...(packageJson.dependencies || {}),
+        ...{ [dependencyName]: version },
+      };
+    }
+  }
+
+  public removeRootPackageJsonDependencies(dependencyName: string) {
+    const rootPkg = this.workspacePkgs[this.context];
+    if (rootPkg.pkgJson) {
+      if (rootPkg.pkgJson.dependencies) {
+        delete rootPkg.pkgJson.dependencies[dependencyName];
+      }
+    }
+  }
+
+  public dispersePackageJson() {
+    for (const [dir, { pkgJson }] of Object.entries(this.workspacePkgs)) {
+      const _path = `${path.resolve(this.context, dir)}/package.json`;
+      fs.writeJSONSync(_path, pkgJson);
+      $`${this.context}/node_modules/.bin/prettier -w ${_path}`;
+    }
+  }
+
   public async init() {
     const rootPkgJson = await WorkspacePkg.getPackageJson(this.context);
     if (rootPkgJson) {
@@ -37,9 +80,7 @@ class WorkspacePkg {
       const workspacesDirs = (rootPkgJson.workspaces || [])
         .map((dir) => dir.replace(/\*$/, ''))
         .map((dir) => fs.readdirSync(dir).map((walk) => path.join(dir, walk)))
-        .flat()
-        .concat('');
-
+        .flat();
       for (const dir of workspacesDirs) {
         const pkgJson = await WorkspacePkg.getPackageJson(
           `${this.context}/${dir}`,

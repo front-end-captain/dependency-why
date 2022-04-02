@@ -6,7 +6,7 @@ export async function getFileContent(sourceFilePath: string) {
   try {
     fileContent = await fs.readFile(sourceFilePath, { encoding: 'utf-8' });
   } catch (err) {
-    console.log('[error][getFileContent]', sourceFilePath);
+    console.log('[error][getFileContent]', sourceFilePath, err);
   }
   return fileContent;
 }

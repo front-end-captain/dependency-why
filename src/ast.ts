@@ -17,10 +17,7 @@ export async function getAst(
         '@babel/preset-typescript',
       ],
       plugins: [
-        [
-          '@babel/plugin-proposal-decorators',
-          { decoratorsBeforeExport: true },
-        ],
+        ['@babel/plugin-proposal-decorators', { decoratorsBeforeExport: true }],
       ],
       filename: fileName,
     });
@@ -46,10 +43,19 @@ export function getImportSourceList(ast: t.File | t.Program | null) {
             }
           });
         }
+        if (
+          path.node.callee.type === 'Identifier' &&
+          path.node.callee.name === 'require'
+        ) {
+          path.node.arguments.forEach((arg) => {
+            if (arg.type === 'StringLiteral') {
+              importSourceList.push(arg.value);
+            }
+          });
+        }
       },
     });
   }
 
   return importSourceList;
 }
-

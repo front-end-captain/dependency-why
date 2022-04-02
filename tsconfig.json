@@ -5,6 +5,7 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "rootDir": ".",
+    "baseUrl": "./",
     "outDir": "build",
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
@@ -26,6 +27,7 @@
   },
   "include": [
     "src/**/*",
+    "test/**/*"
   ],
   "exclude": ["bin/**/*", "backup/**/*"]
 }

@@ -12,6 +12,7 @@ export type BasePkgFields = {
   repository?: Record<string, string>;
   devDependencies?: Record<string, string>;
   dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
   keywords?: string[];
   author?: string;
   browserslist?: string[];
